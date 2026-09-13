@@ -12,7 +12,6 @@ const storageKey = "predicates";
 const defaultPredicates = [
     "subClassOf",
     "elementOf",
-    "type",
 ]
 
 const readStoredPredicates = (): string[] => {
