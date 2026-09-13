@@ -2,6 +2,7 @@ import cytoscape from "cytoscape";
 import type {Ontology} from "../ontology/Ontology.ts";
 import * as React from "react";
 
+// TODO: classes without a label render as "undefined" here
 export function renderNodeTooltip(event: cytoscape.EventObject, ontology: Ontology, tooltipRef: React.RefObject<HTMLDivElement | null>, graphRef: React.RefObject<HTMLDivElement | null>) {
     const node = event.target;
     const hoveredId = node.id();

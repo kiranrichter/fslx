@@ -1,5 +1,6 @@
 export type CQDefinition = typeof CQ_DEFINITIONS[number];
 
+// TODO: more
 export const CQ_DEFINITIONS = [
     {
         id: "relation",

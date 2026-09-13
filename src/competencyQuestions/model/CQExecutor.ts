@@ -13,6 +13,7 @@ type Edge = {
 
 export class CQExecutor {
     public executeCQ(cq: CQDefinition | null, ontology: Ontology, query: CQValues): CQResult | null {
+        // TODO: Transitivity
         if (!cq || !query || !ontology) {
             return null;
         }

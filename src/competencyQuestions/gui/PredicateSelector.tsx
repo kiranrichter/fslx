@@ -8,6 +8,8 @@ type Props = {
     onSelect: (value: string) => void,
 }
 
+// TODO: Include "Multi-Select" like PredicatesPicker.tsx - use Selector.tsx - combine PredicateSelector and PredicatePicker IF exactly the same
+// TODO: Maybe only show relevant Predicates when Class(-es) selected, meaning only Predicates included in Classes relations
 export default function PredicatesSelector({label, ontology, value, onSelect}: Props) {
     const predicates: string[] = ontology.allPredicates;
 

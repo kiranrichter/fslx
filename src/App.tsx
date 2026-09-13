@@ -23,6 +23,7 @@ function App() {
     return (
         <>
             {!ontology &&
+                // TODO: automatic Git "Download" from /fsl - check possible implementations (clone/pull/download/..)
                 <UploadArea setOntology={setOntology}/>
             }
             {ontology &&

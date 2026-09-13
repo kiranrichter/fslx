@@ -7,12 +7,14 @@ import {type Store} from "rdflib";
 import {OntologyClass} from "./types/OntologyClass.ts";
 import {OntologyParser} from "./OntologyParser.ts";
 
+const SUB_CLASS_OF = OntologyParser.shorten(RDFS.subClassOf.value);
+
 export class Ontology {
 
     public readonly store: Store;
     public readonly modules: OntologyModule[];
     public readonly classes: Map<string, OntologyClass> = new Map();
-    public readonly rootClassesIDs: string[] = [];
+    public rootClassesIDs: string[] = [];
     public allPredicates: string[] = [];
 
     public constructor(store: Store, modules: OntologyModule[]) {
@@ -25,6 +27,7 @@ export class Ontology {
         this.parseClasses();
         this.parseAnnotations();
         this.parseRelations();
+        this.parseRootClasses();
     }
 
     private parseClasses() {
@@ -49,7 +52,7 @@ export class Ontology {
     }
 
     private parseRelations() {
-        this.allPredicates = ["type", "subClassOf", "elementOf"];
+        const predicates = new Set(["type", "subClassOf", "elementOf"]);
         this.store.match(null, null, null)
             .filter(statement => statement.object.termType === "NamedNode")
             .filter(statement => !(
@@ -65,10 +68,34 @@ export class Ontology {
                 subject.relations.push({predicate, targetId: object.id});
                 object.incomingRelations.push({predicate, sourceId: subject.id});
 
-                if (statement.predicate.value.startsWith(TBOX_NAMESPACE) && !this.allPredicates.includes(predicate)) {
-                    this.allPredicates.push(predicate);
+                if (statement.predicate.value.startsWith(TBOX_NAMESPACE)) {
+                    predicates.add(predicate);
                 }
             });
+
+        this.allPredicates = [...predicates];
+    }
+
+    private parseRootClasses() {
+        const rootIDs = new Set<string>();
+
+        Array.from(this.classes.values())
+            .filter(clazz => this.subClassesOf(clazz).length > 0)
+            .filter(clazz => !clazz.relations.some(relation => relation.predicate === SUB_CLASS_OF))
+            .forEach(clazz => {
+                rootIDs.add(clazz.id);
+                this.subClassesOf(clazz).forEach(id => rootIDs.add(id));
+            });
+
+        if (rootIDs.size > 0) {
+            this.rootClassesIDs = [...rootIDs];
+        }
+    }
+
+    private subClassesOf(clazz: OntologyClass): string[] {
+        return clazz.incomingRelations
+            .filter(relation => relation.predicate === SUB_CLASS_OF)
+            .map(relation => relation.sourceId);
     }
 
     private getOrCreateClass(id: string): OntologyClass {

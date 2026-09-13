@@ -1,3 +1,4 @@
+// TODO: constructor unused
 export class OntologyRelation {
     predicate: string;
     targetId: string;
@@ -8,6 +9,7 @@ export class OntologyRelation {
     }
 }
 
+// TODO: constructor unused
 export class IncomingRelation {
     predicate: string;
     sourceId: string;

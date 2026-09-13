@@ -45,8 +45,8 @@ export default function UploadArea({setOntology}: Props) {
                         onChange={handleFileUpload}
                     />
 
-                    <h2>Ontologie laden</h2>
-                    <p>Dateien hier ablegen oder klicken</p>
+                    <h2>Load ontology</h2>
+                    <p>Drop files here or click</p>
                 </label>
             </div>
         </div>

@@ -5,10 +5,21 @@ import type {Ontology} from "../ontology/Ontology.ts";
 
 export const createContext = (originClasses: OntologyClass[], ontology: Ontology, visibleRelations: string[]): GraphContext => {
     const classes = [...originClasses];
+    const classIDs = new Set(classes.map(c => c.id));
     const relations: GraphRelation[] = [];
+    const visiblePredicates = new Set(visibleRelations);
+
+    function addClass(clazz: OntologyClass) {
+        if (classIDs.has(clazz.id)) {
+            return;
+        }
+
+        classIDs.add(clazz.id);
+        classes.push(clazz);
+    }
 
     function processRelation(relation: OntologyRelation, source: OntologyClass) {
-        if (!visibleRelations.includes(relation.predicate)) {
+        if (!visiblePredicates.has(relation.predicate)) {
             return;
         }
 
@@ -18,13 +29,8 @@ export const createContext = (originClasses: OntologyClass[], ontology: Ontology
             return;
         }
 
-        if (!classes.some(c => c.id === target.id)) {
-            classes.push(target);
-        }
-
-        if (!classes.some(c => c.id === source.id)) {
-            classes.push(source);
-        }
+        addClass(target);
+        addClass(source);
 
         relations.push({
             source,

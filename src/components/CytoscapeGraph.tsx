@@ -183,6 +183,14 @@ export default function CytoscapeGraph({
         tooltipRef.current?.classList.remove("visible");
     }, []);
 
+    const navigateToRoot = useCallback(() => {
+        hideTooltip();
+        setSearchResults(null);
+        setCQResult(null);
+        setFocusClasses(null);
+        setBreadCrumb([]);
+    }, [hideTooltip, setCQResult, setSearchResults]);
+
     const navigateToClass = useCallback((focusClass: OntologyClass) => {
         hideTooltip();
         setSearchResults(null);
@@ -256,13 +264,31 @@ export default function CytoscapeGraph({
         if (!cy) return;
 
         const builder = new OntologyGraphBuilder();
+        const elements = builder.build(graphContext);
+        const elementIDs = new Set(elements.map(element => String(element.data.id)));
+        let structureChanged = false;
 
         cy.batch(() => {
-            cy.elements().remove();
-            cy.add(builder.build(graphContext));
+            structureChanged = cy.elements()
+                .filter(element => !elementIDs.has(element.id()))
+                .remove()
+                .length > 0;
+
+            elements.forEach(element => {
+                const existing = cy.getElementById(String(element.data.id));
+
+                if (existing.empty()) {
+                    cy.add(element);
+                    structureChanged = true;
+                } else if (existing.isNode()) {
+                    existing.data(element.data);
+                }
+            });
         });
 
-        cy.layout(dynamicLayout).run();
+        if (structureChanged) {
+            cy.layout(dynamicLayout).run();
+        }
     }, [dynamicLayout, graphContext]);
 
     useEffect(() => {
@@ -286,9 +312,15 @@ export default function CytoscapeGraph({
     return (
         <div className="cytoscape-container">
             <div className="cytoscape-breadcrumb">
-                {breadCrumb.map((c, i) => (
+                <span className="cytoscape-breadcrumb-list">
+                    <button type="button" onClick={navigateToRoot}
+                            className="cytoscape-breadcrumb-link">
+                        Root
+                    </button>
+                </span>
+                {breadCrumb.map(c => (
                     <span key={c.id} className="cytoscape-breadcrumb-list">
-                        {i > 0 && " > "}
+                        {" > "}
                         <button type="button" onClick={() => navigateToClass(c)}
                                 className="cytoscape-breadcrumb-link">
                             {c.label ?? c.id}

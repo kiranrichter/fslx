@@ -4,26 +4,29 @@ import type {GraphContext} from "../components/CytoscapeGraph.tsx";
 
 export class OntologyGraphBuilder {
     private nodes = new Map<string, cytoscape.ElementDefinition>();
-    private edges: cytoscape.ElementDefinition[] = [];
+    private edges = new Map<string, cytoscape.ElementDefinition>();
 
     public build(context: GraphContext): cytoscape.ElementDefinition[] {
         this.nodes.clear();
-        this.edges = [];
+        this.edges.clear();
         const classes = context.classes;
         const relations = context.relations;
-        const visibleRelations = context.visibleRelations;
+        const visibleRelations = new Set(context.visibleRelations);
+        const connectedClassIDs = new Set<string>();
 
         relations.forEach(relation => {
-            if (!visibleRelations.includes(relation.predicate)) {
+            if (!visibleRelations.has(relation.predicate)) {
                 return;
             }
+            connectedClassIDs.add(relation.source.id);
+            connectedClassIDs.add(relation.target.id);
             this.addEdge(relation.source, relation.target, relation.predicate);
         })
 
         classes.forEach(clazz => {
-                if (relations.some(r => (r.source.id === clazz.id || r.target.id == clazz.id) && visibleRelations.includes(r.predicate))) {
-                    const size = clazz.relations.filter(r => visibleRelations.includes(r.predicate)).length
-                        + clazz.incomingRelations.filter(r => visibleRelations.includes(r.predicate)).length;
+                if (connectedClassIDs.has(clazz.id)) {
+                    const size = clazz.relations.filter(r => visibleRelations.has(r.predicate)).length
+                        + clazz.incomingRelations.filter(r => visibleRelations.has(r.predicate)).length;
                     this.addNode(clazz, size)
                 }
             }
@@ -31,17 +34,16 @@ export class OntologyGraphBuilder {
 
         return [
             ...this.nodes.values(),
-            ...(this.edges)
+            ...this.edges.values()
         ];
     }
 
     private addEdge(source: OntologyClass, target: OntologyClass, predicate: string) {
-        if (this.edges.some(e => e.data.source === source.id && e.data.target === target.id && e.data.label === predicate)) {
-            return;
-        }
-        this.edges.push({
+        const id = source.id + "|" + predicate + "|" + target.id;
+
+        this.edges.set(id, {
             data: {
-                id: crypto.randomUUID(),
+                id: id,
                 source: source.id,
                 target: target.id,
                 label: predicate,
